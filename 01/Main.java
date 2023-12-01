@@ -33,7 +33,7 @@ class Main {
         return translator.get(substring);
     }
 
-    public static Character[] genericResolver(String line, Map<String, Character> translator) {
+    public static Character[] genericResolverWithDoublePass(String line, Map<String, Character> translator) {
         Character[] response = new Character[2];
         boolean shouldBreak = false;
         for (int i = 0; i < line.length(); i++) {
@@ -68,13 +68,35 @@ class Main {
         return response;
     }
 
-    public static Character[] resolvePartTwo(String line) {
-        return genericResolver(line, partTwo);
+    public static Character[] resolvePartTwoWithDoublePass(String line) {
+        return genericResolverWithDoublePass(line, partTwo);
     }
 
-    
+    public static Character[] resolvePartTwoWithOnePass(String line) {
+        var chars = line.toCharArray();
+        boolean firstDigit = true;
+        Character[] response = new Character[2];
+        for (int i = 0; i < chars.length; i++) {
+            for (int j = i; j < line.length(); j++) {
+                Character possibleNumber = translateStringToNumber(line.substring(i, j + 1), partTwo);
+                if (possibleNumber != null) {
+                    if (firstDigit) {
+                        firstDigit = false;
+                        response[0] = possibleNumber;
+                        response[1] = possibleNumber;
+                    } else {
+                        response[1] = possibleNumber;
+                    }
+
+                }
+            }
+        }
+        System.out.println(line + " " + response[0] + response[1]);
+        return response;
+    }
+
     public static Character[] resolvePartOneWithMapAndDoublePass(String line) {
-        return genericResolver(line, partOne);
+        return genericResolverWithDoublePass(line, partOne);
     }
 
     public static Character[] resolvePartOneWithoutMapAndOnePass(String line) {
@@ -118,14 +140,14 @@ class Main {
 
     public static void main(String[] args) throws IOException {
         var part1 = false;
-        String path = part1? "example-input.txt": "example-input-2.txt";
+        String path = part1 ? "example-input.txt" : "input-part2.txt";
         var sum = Files.readAllLines(Paths.get(path)).stream()
                 .map(line -> {
                     if (part1) {
                         var solutionForLine = resolvePartOneWithMapAndDoublePass(line);
                         return new String(solutionForLine[0] + "" + solutionForLine[1]);
                     }
-                    var solutionForLine = resolvePartTwo(line);
+                    var solutionForLine = resolvePartTwoWithOnePass(line);
                     return new String(solutionForLine[0] + "" + solutionForLine[1]);
                 })
                 .mapToInt(line -> Integer.parseInt(line))
