@@ -2,54 +2,82 @@ import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Paths;
 import java.util.*;
-import java.util.stream.Collectors;
 
 class Main {
-    record StringToDigit(String from, String to) {
+
+    final static Map<String, Character> partTwo = new HashMap<>();
+    final static Map<String, Character> partOne = new HashMap<>();
+    static {
+        partOne.put("1", '1');
+        partOne.put("2", '2');
+        partOne.put("3", '3');
+        partOne.put("4", '4');
+        partOne.put("5", '5');
+        partOne.put("6", '6');
+        partOne.put("7", '7');
+        partOne.put("8", '8');
+        partOne.put("9", '9');
+        partTwo.putAll(partOne);
+        partTwo.put("one", '1');
+        partTwo.put("two", '2');
+        partTwo.put("three", '3');
+        partTwo.put("four", '4');
+        partTwo.put("five", '5');
+        partTwo.put("six", '6');
+        partTwo.put("seven", '7');
+        partTwo.put("eight", '8');
+        partTwo.put("nine", '9');
     }
 
-    final static Map<String, Character> stringToNumber = Map.of(
-            // "zero", '0',
-            "one", '1',
-            "two", '2',
-            "three", '3',
-            "four", '4',
-            "five", '5',
-            "six", '6',
-            "seven", '7',
-            "eight", '8',
-            "nine", '9');
-
-    public static void reset(HashSet<Character> hash) {
-        hash.add('z');
-        hash.add('o');
-        hash.add('t');
-        hash.add('f');
-        hash.add('s');
-        hash.add('e');
-        hash.add('n');
+    static Character translateStringToNumber(String substring, Map<String, Character> translator) {
+        return translator.get(substring);
     }
 
-    public static String getReplacedString(String line) {
-        StringBuilder replacedString = new StringBuilder();
-        HashSet<Character> nextPossible = new HashSet<Character>();
-
+    public static Character[] genericResolver(String line, Map<String, Character> translator) {
+        Character[] response = new Character[2];
+        boolean shouldBreak = false;
         for (int i = 0; i < line.length(); i++) {
-            char possibleDigit = line.charAt(i);
-            if (Character.isDigit(possibleDigit)) {
-                replacedString.append(possibleDigit);
-                continue;
+            for (int j = i; j < line.length(); j++) {
+                Character possibleNumber = translateStringToNumber(line.substring(i, j + 1), translator);
+                if (possibleNumber != null) {
+                    shouldBreak = true;
+                    response[0] = possibleNumber;
+                    break;
+                }
             }
-            if (nextPossible.contains(possibleDigit)) {
-                
-            } else {
-                reset(nextPossible);
+            if (shouldBreak) {
+                break;
             }
         }
-        return replacedString.toString();
+        shouldBreak = false;
+
+        for (int i = line.length() - 1; i >= 0; i--) {
+            for (int j = i; j >= 0; j--) {
+                Character possibleNumber = translateStringToNumber(line.substring(j, i + 1), translator);
+                if (possibleNumber != null) {
+                    shouldBreak = true;
+                    response[1] = possibleNumber;
+                    break;
+                }
+            }
+            if (shouldBreak) {
+                break;
+            }
+        }
+        System.out.println(line + " " + response[0] + response[1]);
+        return response;
     }
 
-    public static Character[] resolve(String line) {
+    public static Character[] resolvePartTwo(String line) {
+        return genericResolver(line, partTwo);
+    }
+
+    
+    public static Character[] resolvePartOneWithMapAndDoublePass(String line) {
+        return genericResolver(line, partOne);
+    }
+
+    public static Character[] resolvePartOneWithoutMapAndOnePass(String line) {
         var chars = line.toCharArray();
         boolean firstDigit = true;
         Character[] response = new Character[2];
@@ -64,47 +92,24 @@ class Main {
                 }
             }
         }
+        System.out.println(line + " " + response[0] + response[1]);
         return response;
     }
 
-    static Character findNumberInString(String substring) {
-        try {
-            Integer.parseInt(substring);
-            return substring.charAt(0);
-        } catch (NumberFormatException ex) {
-            return stringToNumber.get(substring);
-        }
-    }
-
-    public static Character[] resolvePartTwo(String line) {
+    public static Character[] resolvePartOneWithMapAndOnePass(String line) {
+        var chars = line.toCharArray();
+        boolean firstDigit = true;
         Character[] response = new Character[2];
-        boolean shouldBreak =  false;
-        for (int i = 0; i < line.length(); i++) {
-            for (int j = i; j < line.length(); j++) {
-                Character maybeMatch = findNumberInString(line.substring(i, j + 1));
-                if (maybeMatch != null) {
-                    shouldBreak = true;
-                    response[0] = maybeMatch;
-                    break ;
+        for (int i = 0; i < chars.length; i++) {
+            Character number = translateStringToNumber(chars[i] + "", partOne);
+            if (number != null) {
+                if (firstDigit) {
+                    firstDigit = false;
+                    response[0] = number;
+                    response[1] = number;
+                } else {
+                    response[1] = number;
                 }
-            }
-            if (shouldBreak) {
-                break;
-            }
-        }
-        shouldBreak = false;
-
-        for (int i = line.length() - 1; i >= 0; i--) {
-            for (int j = i; j >= 0; j--) {
-                Character maybeMatch = findNumberInString(line.substring(j, i + 1));
-                if (maybeMatch != null) {
-                    shouldBreak = true;
-                    response[1] = maybeMatch;
-                    break;
-                }
-            }
-            if (shouldBreak) {
-                break;
             }
         }
         System.out.println(line + " " + response[0] + response[1]);
@@ -113,10 +118,11 @@ class Main {
 
     public static void main(String[] args) throws IOException {
         var part1 = false;
-        var sum = Files.readAllLines(Paths.get("input-part2.txt")).stream()
+        String path = part1? "example-input.txt": "example-input-2.txt";
+        var sum = Files.readAllLines(Paths.get(path)).stream()
                 .map(line -> {
                     if (part1) {
-                        var solutionForLine = resolve(line);
+                        var solutionForLine = resolvePartOneWithMapAndDoublePass(line);
                         return new String(solutionForLine[0] + "" + solutionForLine[1]);
                     }
                     var solutionForLine = resolvePartTwo(line);
