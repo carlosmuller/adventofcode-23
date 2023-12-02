@@ -22,10 +22,10 @@ public class Main {
     }
 
     public static class Color {
-        public int min = Integer.MAX_VALUE;
+        public int min = Integer.MIN_VALUE;
 
         public void isBigger(int qtde){
-                min = min > qtde? qtde : min;
+                min = min < qtde? qtde : min;
             }
 
     }
@@ -65,13 +65,13 @@ public class Main {
                 case Colors.green ->  green.isBigger(Integer.parseInt(matcher.group(2)));
             }
         }
-        System.out.println(line + " " + blue.min + "blue "+  red.min +"red " + green.min + "green " + blue.min * red.min * green.min);
+        System.out.println(line + " [" +  red.min +" red "+ green.min + " green "+ blue.min + " blue ] cube" + blue.min * red.min * green.min);
         return blue.min * red.min * green.min;
     }
 
     public static void main(String[] args) throws IOException {
         var part1 = false;
-        String path = "input-sample.txt" ;
+        String path = "input.txt" ;
         var sum = Files.readAllLines(Paths.get(path)).stream()
                 .map(line -> {
                     Integer gameNumber = getGameNumber(line);
